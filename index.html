@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anime & Educational Quiz Poster Generator Pro</title>
+  
+  <!-- CDNs for Imports, Fonts & Exports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  
+  <!-- Extended Hindi & English Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bungee&family=Cinzel:wght@700&family=Kalam:wght@700&family=Montserrat:wght@700;900&family=Noto+Serif+Devanagari:wght@600;800&family=Oswald:wght@600&family=Poppins:wght@600;800&family=Rozha+One&family=Tiro+Devanagari+Hindi&family=Yatra+One&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --bg-sidebar: #0b0f19;
+      --primary: #f59e0b;
+      --primary-hover: #d97706;
+      --accent: #38bdf8;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --border: #334155;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', system-ui, sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+
+    /* Header Styling */
+    header {
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-logo { font-size: 1.3rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+    .brand-logo span { color: var(--accent); }
+
+    /* Split Workspace Layout */
+    .workspace { display: flex; flex: 1; height: calc(100vh - 65px); overflow: hidden; }
+    
+    .left-panel {
+      width: 50%;
+      background: var(--bg-dark);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .right-panel {
+      width: 50%;
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    /* Tabs Bar */
+    .nav-tabs {
+      display: flex;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .nav-tab {
+      padding: 0.75rem 1.25rem;
+      color: var(--text-sub);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+
+    .nav-tab:hover, .nav-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    .tab-content { padding: 1.25rem; display: none; }
+    .tab-content.active { display: block; }
+
+    /* Controls & Inputs */
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-sub); margin-bottom: 0.4rem; }
+    
+    input[type="text"], select, textarea {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus { border-color: var(--primary); }
+    textarea { resize: vertical; min-height: 130px; }
+
+    /* Range Sliders for Font Sizes */
+    .range-container { display: flex; align-items: center; gap: 0.8rem; }
+    .range-container input[type="range"] { flex: 1; accent-color: var(--primary); }
+    .range-value { font-size: 0.85rem; font-weight: bold; color: var(--accent); min-width: 40px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
+
+    .btn {
+      background: var(--primary);
+      color: #000;
+      font-weight: 700;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.88rem;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-danger { background: var(--danger); color: #fff; }
+
+    /* Template Cards Grid */
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.8rem;
+    }
+
+    .template-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 0.8rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .template-card:hover, .template-card.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+    }
+
+    .template-card h4 { font-size: 0.85rem; color: var(--text-main); }
+    .template-card p { font-size: 0.72rem; color: var(--text-sub); }
+
+    /* Live Preview Panel Elements */
+    .preview-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .canvas-container {
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      border-radius: 8px;
+      overflow: hidden;
+      max-width: 100%;
+    }
+
+    #posterCanvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      background: #fff;
+    }
+
+    /* List of Questions in Question Manager */
+    .q-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.8rem;
+      margin-bottom: 0.6rem;
+      cursor: pointer;
+    }
+
+    .q-item.active { border-color: var(--primary); background: rgba(245, 158, 11, 0.08); }
+    .q-item-title { font-weight: bold; font-size: 0.85rem; margin-bottom: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .q-item-ops { font-size: 0.75rem; color: var(--text-sub); }
+
+    /* Responsive Adjustments */
+    @media (max-width: 900px) {
+      .workspace { flex-direction: column; height: auto; overflow: visible; }
+      .left-panel, .right-panel { width: 100%; }
+      .right-panel { position: sticky; top: 65px; z-index: 90; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-logo">
+      ⚡ Quiz Poster Generator <span>PRO</span>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <span id="questionCounter" style="font-size: 0.8rem; color: var(--text-sub); align-self: center;">0 Question(s)</span>
+    </div>
+  </header>
+
+  <div class="workspace">
+    
+    <!-- LEFT PANEL: Editors, Imports & Customization -->
+    <div class="left-panel">
+      
+      <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('pasteTab')">📋 ChatGPT Paste</button>
+        <button class="nav-tab" onclick="switchTab('importTab')">📁 File Import</button>
+        <button class="nav-tab" onclick="switchTab('manageTab')">📝 Questions (<span id="tabCount">0</span>)</button>
+        <button class="nav-tab" onclick="switchTab('templateTab')">🎨 Anime Templates</button>
+        <button class="nav-tab" onclick="switchTab('customizeTab')">⚙️ Styling & Fonts</button>
+        <button class="nav-tab" onclick="switchTab('exportTab')">💾 Export</button>
+      </div>
+
+      <!-- TAB 1: ChatGPT Copy-Paste Import -->
+      <div id="pasteTab" class="tab-content active">
+        <div class="form-group">
+          <label>ChatGPT या AI से हिंदी/इंग्लिश प्रश्न यहाँ पेस्ट करें:</label>
+          <textarea id="pasteInput" placeholder="यहाँ पेस्ट करें... उदाहरण:
+
+प्र.1 भारत की राजधानी कहाँ है?
+A. मुंबई
+B. नई दिल्ली
+C. कोलकाता
+D. चेन्नई
+
+2. सौर मंडल का सबसे बड़ा ग्रह कौन सा है?
+(क) मंगल
+(ख) बृहस्पति
+(ग) शनि
+(घ) बुध"></textarea>
+        </div>
+        <button class="btn" style="width: 100%;" onclick="processPasteInput()">⚡ प्रश्न इंपोर्ट करें और लाइव देखें</button>
+      </div>
+
+      <!-- TAB 2: File Import (PDF, DOCX, XLSX, TXT) -->
+      <div id="importTab" class="tab-content">
+        <div class="form-group">
+          <label>फाइल अपलोड करें (PDF, DOCX, XLSX, CSV, TXT):</label>
+          <input type="file" id="fileInput" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" onchange="handleFileUpload(event)">
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-sub);">ऑटो-डिटेक्शन सिस्टम प्रश्न संख्या और विकल्पों को स्वतः पहचान लेगा।</p>
+      </div>
+
+      <!-- TAB 3: Question Manager -->
+      <div id="manageTab" class="tab-content">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem;">
+          <button class="btn btn-secondary" onclick="addNewQuestion()">+ नया प्रश्न जोड़ें</button>
+          <button class="btn btn-danger" onclick="clearAllQuestions()">सब साफ़ करें</button>
+        </div>
+        <div id="questionListContainer">
+          <p style="text-align: center; color: var(--text-sub); font-size: 0.85rem; padding: 2rem;">कोई प्रश्न लोड नहीं हुआ है।</p>
+        </div>
+      </div>
+
+      <!-- TAB 4: Anime & Cartoon Templates -->
+      <div id="templateTab" class="tab-content">
+        <div class="template-grid" id="templateGrid">
+          <!-- Dynamically Generated -->
+        </div>
+      </div>
+
+      <!-- TAB 5: Styling, Colors & Font Sizes -->
+      <div id="customizeTab" class="tab-content">
+        
+        <h4 style="color: var(--primary); font-size: 0.9rem; margin-bottom: 0.8rem;">1. Font Settings & 10+ New Fonts</h4>
+        <div class="form-group">
+          <label>फॉन्ट स्टाइल (Font Family):</label>
+          <select id="fontSelect" onchange="updateCustoms()">
+            <!-- Devanagari / Hindi Special Fonts -->
+            <option value="'Tiro Devanagari Hindi', serif">Tiro Devanagari Hindi (क्लासिक हिंदी)</option>
+            <option value="'Kalam', cursive">Kalam (हिंदी हैंडराइटिंग)</option>
+            <option value="'Rozha One', serif">Rozha One (बोल्ड हिंदी हेडिंग)</option>
+            <option value="'Yatra One', cursive">Yatra One (देवनागरी स्टाइल)</option>
+            <option value="'Noto Serif Devanagari', serif">Noto Serif Devanagari (स्पष्ट हिंदी)</option>
+            <!-- Modern English / Mixed Fonts -->
+            <option value="'Poppins', sans-serif" selected>Poppins (मॉडर्न क्लीन)</option>
+            <option value="'Bangers', cursive">Bangers (एनिमे / कॉमिक बोल्ड)</option>
+            <option value="'Bungee', cursive">Bungee (कार्टून 3D स्टाइल)</option>
+            <option value="'Oswald', sans-serif">Oswald (कंडेंस्ड बोल्ड)</option>
+            <option value="'Cinzel', serif">Cinzel (प्रीमियम रॉयल)</option>
+            <option value="'Montserrat', sans-serif">Montserrat (एक्सट्रा बोल्ड)</option>
+          </select>
+        </div>
+
+        <h4 style="color: var(--primary); font-size: 0.9rem; margin-top: 1.2rem; margin-bottom: 0.8rem;">2. Font Size Controls (छोटा / बड़ा करें)</h4>
+        
+        <div class="form-group">
+          <label>क्वेश्चन फ़ॉन्ट साइज़ (Question Size):</label>
+          <div class="range-container">
+            <input type="range" id="qFontSize" min="24" max="72" value="42" oninput="updateCustoms()">
+            <span class="range-value" id="qFontSizeVal">42px</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>ऑप्शन फ़ॉन्ट साइज़ (Options Size):</label>
+          <div class="range-container">
+            <input type="range" id="optFontSize" min="20" max="60" value="34" oninput="updateCustoms()">
+            <span class="range-value" id="optFontSizeVal">34px</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>हेडिंग फ़ॉन्ट साइज़ (Header Size):</label>
+          <div class="range-container">
+            <input type="range" id="headFontSize" min="20" max="64" value="36" oninput="updateCustoms()">
+            <span class="range-value" id="headFontSizeVal">36px</span>
+          </div>
+        </div>
+
+        <h4 style="color: var(--primary); font-size: 0.9rem; margin-top: 1.2rem; margin-bottom: 0.8rem;">3. Header Text Settings</h4>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>टॉप हेडिंग:</label>
+            <input type="text" id="topHeading" value="CAN YOU SOLVE IT?" oninput="updateCustoms()">
+          </div>
+          <div class="form-group">
+            <label>सीरीज़ नाम:</label>
+            <input type="text" id="seriesName" value="QUIZ CHALLENGE" oninput="updateCustoms()">
+          </div>
+        </div>
+
+        <h4 style="color: var(--primary); font-size: 0.9rem; margin-top: 1.2rem; margin-bottom: 0.8rem;">4. Custom Color Palette</h4>
+        <div class="grid-3">
+          <div class="form-group">
+            <label>बैकग्राउंड:</label>
+            <input type="color" id="bgColor" value="#ffffff" onchange="updateCustoms()">
+          </div>
+          <div class="form-group">
+            <label>क्वेश्चन कलर:</label>
+            <input type="color" id="qColor" value="#0f172a" onchange="updateCustoms()">
+          </div>
+          <div class="form-group">
+            <label>ऑप्शन कलर:</label>
+            <input type="color" id="optColor" value="#1e293b" onchange="updateCustoms()">
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 6: Bulk Export Center -->
+      <div id="exportTab" class="tab-content">
+        <h4 style="color: var(--primary); margin-bottom: 1rem;">डाउनलोड ऑप्शन्स</h4>
+        <div class="grid-2" style="gap: 1rem;">
+          <button class="btn" onclick="exportCurrentPNG()">🖼️ सिंगल पोस्टर (PNG)</button>
+          <button class="btn btn-secondary" onclick="exportBulkZIP()">📦 सभी पोस्टर्स (ZIP)</button>
+          <button class="btn btn-secondary" onclick="exportPDF()">📄 PDF फाइल</button>
+          <button class="btn btn-secondary" onclick="exportPPTX()">📊 PPTX (PowerPoint)</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: Live Side-by-Side Preview -->
+    <div class="right-panel">
+      <div class="preview-header">
+        <button class="btn btn-secondary" onclick="prevQuestion()">◀ पिछला</button>
+        <span id="previewCounter" style="font-size: 0.9rem; font-weight: bold; color: var(--accent);">क्वेश्चन 1 / 1</span>
+        <button class="btn btn-secondary" onclick="nextQuestion()">अगला ▶</button>
+      </div>
+
+      <div class="canvas-container">
+        <!-- Exact Resolution Canvas: 1080x1350 (4:5 Aspect Ratio) -->
+        <canvas id="posterCanvas" width="1080" height="1350"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // State Management
+    let questions = [];
+    let currentIndex = 0;
+    let selectedTemplate = 0;
+
+    // 10 Distinct Anime / Webtoon / Cartoon Style Templates
+    const templates = [
+      { id: 0, name: "Shonen Pop", bg: "#FEF08A", cardBg: "#FFFFFF", border: "#000000", qColor: "#000000", optBg: "#3B82F6", optText: "#FFFFFF" },
+      { id: 1, name: "Cyberpunk Anime", bg: "#0F172A", cardBg: "#1E293B", border: "#38BDF8", qColor: "#F8FAFC", optBg: "#0284C7", optText: "#FFFFFF" },
+      { id: 2, name: "Manga Monochromatic", bg: "#FFFFFF", cardBg: "#F1F5F9", border: "#000000", qColor: "#000000", optBg: "#000000", optText: "#FFFFFF" },
+      { id: 3, name: "Soft Pastel Webtoon", bg: "#FCE7F3", cardBg: "#FFFFFF", border: "#F472B6", qColor: "#831843", optBg: "#FBCFE8", optText: "#831843" },
+      { id: 4, name: "Comic Action Yellow", bg: "#FACC15", cardBg: "#000000", border: "#000000", qColor: "#FFFFFF", optBg: "#EF4444", optText: "#FFFFFF" },
+      { id: 5, name: "Ninja Emerald", bg: "#D1FAE5", cardBg: "#FFFFFF", border: "#10B981", qColor: "#065F46", optBg: "#059669", optText: "#FFFFFF" },
+      { id: 6, name: "Mecha Purple", bg: "#F3E8FF", cardBg: "#FFFFFF", border: "#A855F7", qColor: "#581C87", optBg: "#9333EA", optText: "#FFFFFF" },
+      { id: 7, name: "Minimal Cartoon", bg: "#E0F2FE", cardBg: "#FFFFFF", border: "#0284C7", qColor: "#0C4A6E", optBg: "#38BDF8", optText: "#0C4A6E" },
+      { id: 8, name: "Retro Anime Sunset", bg: "#FFEDD5", cardBg: "#FFFFFF", border: "#F97316", qColor: "#7C2D12", optBg: "#FB923C", optText: "#FFFFFF" },
+      { id: 9, name: "Dark Shadow Solo", bg: "#18181B", cardBg: "#27272A", border: "#A1A1AA", qColor: "#FAFAFA", optBg: "#3F3F46", optText: "#FAFAFA" }
+    ];
+
+    // Default Demo Question (Hindi & English Mixed)
+    const defaultQuestion = {
+      qNo: "Q.1",
+      question: "भारत का सबसे बड़ा राष्ट्रीय उद्यान कौन सा है?",
+      options: [
+        "A. जिम कॉर्बेट राष्ट्रीय उद्यान",
+        "B. हेमिस राष्ट्रीय उद्यान",
+        "C. काजीरंगा राष्ट्रीय उद्यान",
+        "D. गिर राष्ट्रीय उद्यान"
+      ]
+    };
+
+    window.onload = function() {
+      questions = [defaultQuestion];
+      initTemplates();
+      updateUI();
+      renderLivePoster();
+    };
+
+    // Tab Switcher
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Initialize Template Grid
+    function initTemplates() {
+      const grid = document.getElementById('templateGrid');
+      grid.innerHTML = '';
+      templates.forEach(t => {
+        const card = document.createElement('div');
+        card.className = `template-card ${t.id === selectedTemplate ? 'active' : ''}`;
+        card.onclick = () => selectTemplate(t.id);
+        card.innerHTML = `
+          <div style="height: 35px; background: ${t.bg}; border: 2px solid ${t.border}; border-radius: 4px; margin-bottom: 0.4rem; display:flex; align-items:center; justify-content:center;">
+            <span style="color:${t.qColor}; font-weight:bold; font-size:0.65rem;">एनिमे स्टाइल</span>
+          </div>
+          <h4>${t.name}</h4>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function selectTemplate(id) {
+      selectedTemplate = id;
+      document.querySelectorAll('.template-card').forEach((c, idx) => {
+        c.classList.toggle('active', idx === id);
+      });
+      renderLivePoster();
+    }
+
+    // Smart ChatGPT & Devanagari/Hindi Copy-Paste Parser
+    function processPasteInput() {
+      const text = document.getElementById('pasteInput').value.trim();
+      if (!text) return alert("कृपया पहले प्रश्न पेस्ट करें!");
+
+      const parsed = parseMCQText(text);
+      if (parsed.length > 0) {
+        questions = parsed;
+        currentIndex = 0;
+        updateUI();
+        renderLivePoster();
+        alert(`${parsed.length} प्रश्न सफलतापूर्वक इंपोर्ट किए गए!`);
+        switchTab('manageTab');
+      } else {
+        alert("कोई मान्य प्रश्न नहीं पहचाना जा सका। कृपया फॉरमेट की जाँच करें।");
+      }
+    }
+
+    function parseMCQText(rawText) {
+      const result = [];
+      // Split by double newlines or question start indicators
+      const blocks = rawText.split(/\n\s*\n/);
+
+      blocks.forEach((block, bIdx) => {
+        const lines = block.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length === 0) return;
+
+        let qText = "";
+        let qNum = `Q.${result.length + 1}`;
+        const options = [];
+
+        lines.forEach(line => {
+          // Detect Option Lines (A., B., (1), (क), (ख), आदि)
+          const optMatch = line.match(/^[\(\[\{]?([A-Da-d1-4क-घ])[\)\]\}]?[\.\:\-\s]\s*(.+)/);
+          if (optMatch) {
+            options.push(`${optMatch[1].toUpperCase()}. ${optMatch[2]}`);
+          } else {
+            if (!qText) {
+              qText = line.replace(/^(Q|Question|प्रश्न|प्र\.)\s*[\d\.\:]*/i, '').trim();
+            } else {
+              qText += " " + line;
+            }
+          }
+        });
+
+        if (qText && options.length >= 2) {
+          result.push({
+            qNo: qNum,
+            question: qText,
+            options: options.slice(0, 4)
+          });
+        }
+      });
+
+      return result;
+    }
+
+    // Handle File Uploads
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      const reader = new FileReader();
+
+      if (ext === 'txt') {
+        reader.onload = (evt) => {
+          questions = parseMCQText(evt.target.result);
+          currentIndex = 0;
+          updateUI();
+          renderLivePoster();
+        };
+        reader.readAsText(file);
+      } else if (ext === 'docx') {
+        reader.onload = (evt) => {
+          mammoth.extractRawText({ arrayBuffer: evt.target.result }).then(res => {
+            questions = parseMCQText(res.value);
+            currentIndex = 0;
+            updateUI();
+            renderLivePoster();
+          });
+        };
+        reader.readAsArrayBuffer(file);
+      } else if (ext === 'xlsx' || ext === 'csv') {
+        reader.onload = (evt) => {
+          const workbook = XLSX.read(evt.target.result, { type: 'binary' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          
+          const parsed = [];
+          json.forEach((row, rIdx) => {
+            if (rIdx === 0 && (row[0] + "").toLowerCase().includes("question")) return;
+            if (row.length >= 5) {
+              parsed.push({
+                qNo: `Q.${parsed.length + 1}`,
+                question: row[0],
+                options: [`A. ${row[1]}`, `B. ${row[2]}`, `C. ${row[3]}`, `D. ${row[4]}`]
+              });
+            }
+          });
+          if (parsed.length > 0) {
+            questions = parsed;
+            currentIndex = 0;
+            updateUI();
+            renderLivePoster();
+          }
+        };
+        reader.readAsBinaryString(file);
+      } else {
+        alert("इस फाइल फॉर्मेट के लिए टेक्स्ट कॉपी-पेस्ट विकल्प का उपयोग करें।");
+      }
+    }
+
+    // Update Control Value Display and Live Canvas
+    function updateCustoms() {
+      document.getElementById('qFontSizeVal').innerText = document.getElementById('qFontSize').value + 'px';
+      document.getElementById('optFontSizeVal').innerText = document.getElementById('optFontSize').value + 'px';
+      document.getElementById('headFontSizeVal').innerText = document.getElementById('headFontSize').value + 'px';
+      renderLivePoster();
+    }
+
+    // Core Canvas Rendering Engine (1080x1350 Resolution)
+    function renderLivePoster() {
+      const canvas = document.getElementById('posterCanvas');
+      const ctx = canvas.getContext('2d');
+      const q = questions[currentIndex] || defaultQuestion;
+      const t = templates[selectedTemplate];
+
+      // Customization Values
+      const fontFamily = document.getElementById('fontSelect').value;
+      const qSize = parseInt(document.getElementById('qFontSize').value);
+      const optSize = parseInt(document.getElementById('optFontSize').value);
+      const headSize = parseInt(document.getElementById('headFontSize').value);
+      const topHeading = document.getElementById('topHeading').value;
+      const seriesName = document.getElementById('seriesName').value;
+
+      // Clear Canvas
+      ctx.fillStyle = t.bg;
+      ctx.fillRect(0, 0, 1080, 1350);
+
+      // Cartoon/Anime Border Outline
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = t.border;
+      ctx.strokeRect(30, 30, 1020, 1290);
+
+      // Header Banner Box
+      ctx.fillStyle = t.cardBg;
+      ctx.fillRect(80, 70, 920, 140);
+      ctx.lineWidth = 8;
+      ctx.strokeRect(80, 70, 920, 140);
+
+      // Header Text
+      ctx.fillStyle = t.qColor;
+      ctx.font = `bold ${headSize}px ${fontFamily}`;
+      ctx.textAlign = 'center';
+      ctx.fillText(topHeading, 540, 130);
+
+      ctx.fillStyle = "#F59E0B";
+      ctx.font = `bold ${Math.round(headSize * 0.65)}px ${fontFamily}`;
+      ctx.fillText(seriesName, 540, 180);
+
+      // Question Card Container
+      ctx.fillStyle = t.cardBg;
+      ctx.fillRect(80, 250, 920, 340);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = t.border;
+      ctx.strokeRect(80, 250, 920, 340);
+
+      // Question Number Tag
+      ctx.fillStyle = t.optBg;
+      ctx.fillRect(110, 220, 160, 60);
+      ctx.strokeRect(110, 220, 160, 60);
+      ctx.fillStyle = t.optText;
+      ctx.font = `bold 28px ${fontFamily}`;
+      ctx.textAlign = 'center';
+      ctx.fillText(q.qNo || "Q.1", 190, 260);
+
+      // Wrapped Question Text
+      ctx.fillStyle = t.qColor;
+      ctx.font = `bold ${qSize}px ${fontFamily}`;
+      ctx.textAlign = 'left';
+      wrapCanvasText(ctx, q.question, 120, 340, 840, qSize * 1.3);
+
+      // Options Rendering
+      const optStartY = 630;
+      const optHeight = 135;
+      const optGap = 25;
+
+      q.options.forEach((opt, idx) => {
+        const y = optStartY + idx * (optHeight + optGap);
+
+        // Option Background Card
+        ctx.fillStyle = t.cardBg;
+        ctx.fillRect(80, y, 920, optHeight);
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = t.border;
+        ctx.strokeRect(80, y, 920, optHeight);
+
+        // Accent Left Bar
+        ctx.fillStyle = t.optBg;
+        ctx.fillRect(80, y, 20, optHeight);
+
+        // Option Text
+        ctx.fillStyle = t.qColor;
+        ctx.font = `600 ${optSize}px ${fontFamily}`;
+        ctx.fillText(opt, 130, y + (optHeight / 2) + (optSize / 3));
+      });
+    }
+
+    // Helper: Wrap Canvas Text Automatically
+    function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(' ');
+      let line = '';
+      let currentY = y;
+
+      for (let n = 0; n < words.length; n++) {
+        let testLine = line + words[n] + ' ';
+        let metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+          ctx.fillText(line, x, currentY);
+          line = words[n] + ' ';
+          currentY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, currentY);
+    }
+
+    // Update Left Panel Question List and Counters
+    function updateUI() {
+      document.getElementById('tabCount').innerText = questions.length;
+      document.getElementById('questionCounter').innerText = `${questions.length} Question(s)`;
+      document.getElementById('previewCounter').innerText = `क्वेश्चन ${currentIndex + 1} / ${questions.length}`;
+
+      const container = document.getElementById('questionListContainer');
+      if (questions.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 0.85rem; padding: 2rem;">कोई प्रश्न मौजूद नहीं है।</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.className = `q-item ${idx === currentIndex ? 'active' : ''}`;
+        item.onclick = () => { currentIndex = idx; updateUI(); renderLivePoster(); };
+        item.innerHTML = `
+          <div class="q-item-title">${q.qNo}: ${q.question}</div>
+          <div class="q-item-ops">${q.options.length} ऑप्शन्स उपलब्ध</div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Question Navigation Controls
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateUI();
+        renderLivePoster();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        updateUI();
+        renderLivePoster();
+      }
+    }
+
+    function addNewQuestion() {
+      questions.push({
+        qNo: `Q.${questions.length + 1}`,
+        question: "नया प्रश्न यहाँ लिखें",
+        options: ["A. विकल्प 1", "B. विकल्प 2", "C. विकल्प 3", "D. विकल्प 4"]
+      });
+      currentIndex = questions.length - 1;
+      updateUI();
+      renderLivePoster();
+    }
+
+    function clearAllQuestions() {
+      if (confirm("क्या आप सभी प्रश्न साफ़ करना चाहते हैं?")) {
+        questions = [];
+        currentIndex = 0;
+        updateUI();
+        renderLivePoster();
+      }
+    }
+
+    // Export Handlers
+    function exportCurrentPNG() {
+      const canvas = document.getElementById('posterCanvas');
+      const link = document.createElement('a');
+      link.download = `Quiz-Poster-${currentIndex + 1}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    async function exportBulkZIP() {
+      if (questions.length === 0) return alert("डाउनलोड करने के लिए कोई प्रश्न नहीं है!");
+      const zip = new JSZip();
+      const canvas = document.getElementById('posterCanvas');
+      const tempIndex = currentIndex;
+
+      for (let i = 0; i < questions.length; i++) {
+        currentIndex = i;
+        renderLivePoster();
+        const dataUrl = canvas.toDataURL('image/png').split(',')[1];
+        zip.file(`Quiz-Poster-${String(i + 1).padStart(3, '0')}.png`, dataUrl, { base64: true });
+      }
+
+      currentIndex = tempIndex;
+      renderLivePoster();
+
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, "Quiz-Posters-Collection.zip");
+    }
+
+    function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'pt', [1080, 1350]);
+      const canvas = document.getElementById('posterCanvas');
+      const tempIndex = currentIndex;
+
+      questions.forEach((q, idx) => {
+        currentIndex = idx;
+        renderLivePoster();
+        const imgData = canvas.toDataURL('image/png');
+        if (idx > 0) pdf.addPage([1080, 1350]);
+        pdf.addImage(imgData, 'PNG', 0, 0, 1080, 1350);
+      });
+
+      currentIndex = tempIndex;
+      renderLivePoster();
+      pdf.save("Quiz-Posters.pdf");
+    }
+
+    function exportPPTX() {
+      const pptx = new PptxGenJS();
+      pptx.defineLayout({ name: 'POSTER', width: 8.0, height: 10.0 });
+      pptx.layout = 'POSTER';
+      const canvas = document.getElementById('posterCanvas');
+      const tempIndex = currentIndex;
+
+      questions.forEach((q, idx) => {
+        currentIndex = idx;
+        renderLivePoster();
+        const slide = pptx.addSlide();
+        slide.addImage({ data: canvas.toDataURL('image/png'), x: 0, y: 0, w: '100%', h: '100%' });
+      });
+
+      currentIndex = tempIndex;
+      renderLivePoster();
+      pptx.writeFile({ fileName: "Quiz-Posters.pptx" });
+    }
+  </script>
+</body>
+</html>
